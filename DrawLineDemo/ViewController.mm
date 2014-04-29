@@ -58,6 +58,7 @@
 {
   Mat image_small;
   
+  
   // Downsample
   pyrDown(image, image_small);
   
@@ -76,8 +77,8 @@
   
   findContours( image_small, contours, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE );
   
-  for( int k = 0; k < contours.size(); k++ )
-    approxPolyDP(contours[k], contours[k], 2, false);
+//  for( int k = 0; k < contours.size(); k++ )
+//    approxPolyDP(contours[k], contours[k], 2, false);
   
   
   // Find contour with largest bbox
@@ -115,29 +116,40 @@
     }
     
     if (min_j >= 0) {
-      cv::Point midPoint = maxContour[min_j];
+      cv::Point2d midPoint = maxContour[min_j];
       
       
       // Calculate the direction, based on neighbor points
-      int prevOffset = 2;
-      cv::Point prevPoint = maxContour[(min_j - prevOffset < 0) ?
+      int prevOffset = 5;
+      cv::Point2d prevPoint = maxContour[(min_j - prevOffset < 0) ?
                                        maxContour.size() + (min_j - prevOffset) :
                                        min_j - prevOffset ];
       
-      int nextOffset = 2;
-      cv::Point nextPoint = maxContour[(min_j + nextOffset >= maxContour.size()) ?
+      int nextOffset = 5;
+      cv::Point2d nextPoint = maxContour[(min_j + nextOffset >= maxContour.size()) ?
                                       (min_j + nextOffset) % maxContour.size() :
                                        min_j + nextOffset ];
       
-      cv::Point direction = nextPoint - prevPoint;
-      
+      // Draw mocked car rectangle
+      cv::Point2d direction = nextPoint - prevPoint;
       direction = direction * (1 / norm(direction));
       
+      cv::Point2d directionOrthogonal = cv::Point2d(-direction.y, direction.x);
+      directionOrthogonal = directionOrthogonal * (1 / norm(directionOrthogonal));
+      
+      double coeff[4][2] = { { 40, 20 }, { 40, -20 }, { -40, -20 }, { -40, 20 } };
+      
+      for ( int k = 0; k < 4; k++ ) {
+        line(image_small,
+             midPoint + coeff[k][0] * direction + coeff[k][1] * directionOrthogonal,
+             midPoint + coeff[(k + 1) % 4][0] * direction + coeff[(k + 1) % 4][1] * directionOrthogonal,
+             Scalar(80, 80, 80), 2, 8);
+      }
+
+      // Draw mid-point
       circle(image_small, midPoint, 5, Scalar( 100, 100, 100), 2, 8);
-      line(image_small, midPoint, 50 * direction + midPoint, Scalar( 100, 100, 100), 2, 8);
       
     }
-    
     
   }
   
@@ -151,12 +163,27 @@
 {
   [super viewDidAppear:animated];
   [videoCamera start];
+  
+  [self toggleTorch:true];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
 {
   [super viewDidDisappear:animated];
   [videoCamera stop];
+  
+  [self toggleTorch:false];
+}
+
+- (void)toggleTorch:(BOOL)mode
+{
+  AVCaptureDevice *device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+  [device lockForConfiguration:nil];
+  if (mode)
+    [device setTorchModeOnWithLevel:0.2 error:nil];
+  else
+    [device setTorchMode:AVCaptureTorchModeOff];
+  [device unlockForConfiguration];
 }
 
 - (void)dealloc

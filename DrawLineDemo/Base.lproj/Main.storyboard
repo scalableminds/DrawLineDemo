@@ -24,7 +24,7 @@
                                 <rect key="frame" x="11" y="437" width="299" height="31"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </slider>
-                            <slider opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="fill" contentVerticalAlignment="bottom" value="1" minValue="1" maxValue="30" translatesAutoresizingMaskIntoConstraints="NO" id="KhS-Ns-THj">
+                            <slider opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="fill" contentVerticalAlignment="bottom" value="100" minValue="1" maxValue="255" translatesAutoresizingMaskIntoConstraints="NO" id="KhS-Ns-THj">
                                 <rect key="frame" x="11" y="399" width="299" height="31"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </slider>

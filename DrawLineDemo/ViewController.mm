@@ -30,9 +30,9 @@
   self.videoCamera.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationPortrait;
   self.videoCamera.defaultFPS = 30;
   
-//  double newWidth = _imageView.frame.size.height * (480.0/640.0);
-//  _imageView.frame = CGRectMake(_imageView.frame.origin.x - (newWidth - _imageView.frame.size.width) / 2, _imageView.frame.origin.y,
-//                                newWidth, _imageView.frame.size.height);
+  //  double newWidth = _imageView.frame.size.height * (480.0/640.0);
+  //  _imageView.frame = CGRectMake(_imageView.frame.origin.x - (newWidth - _imageView.frame.size.width) / 2, _imageView.frame.origin.y,
+  //                                newWidth, _imageView.frame.size.height);
   
   [videoCamera createVideoPreviewLayer];
   [self.imageView.layer addSublayer:self.videoCamera.customPreviewLayer];
@@ -52,20 +52,97 @@
 }
 
 #ifdef __cplusplus
+
+
 - (void)processImage:(Mat&)image
 {
-  // Convert to grayscale
-  cvtColor(image, image, CV_BGR2GRAY);
+  Mat image_small;
   
-  int kernelSize = 33; //int(self.contrastSlider.value) * 2 + 1;
-  int c = 6; //self.thresholdSlider.value;
+  // Downsample
+  pyrDown(image, image_small);
+  
+  // Convert to grayscale
+  cvtColor(image_small, image_small, CV_BGR2GRAY);
+  
   
   // Thresholding
-  adaptiveThreshold(image, image, 255, ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, kernelSize, c);
+  int kernelSize = 33;
+  int c = 6;
+  
+  adaptiveThreshold(image_small, image_small, 255, ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV, kernelSize, c);
+  
+  // Find contours
+  vector<vector<cv::Point>> contours;
+  
+  findContours( image_small, contours, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE );
+  
+  for( int k = 0; k < contours.size(); k++ )
+    approxPolyDP(contours[k], contours[k], 2, false);
   
   
-  printf("%d %d\n", kernelSize, c);
+  // Find contour with largest bbox
+  int max_size = 0;
+  int max_i = -1;
   
+  for ( int i = 0; i < contours.size(); i++ ){
+    cv::Rect bbox = boundingRect(contours[i]);
+    int contourSize = bbox.width * bbox.height;
+    if (max_size < contourSize) {
+      max_size = contourSize;
+      max_i = i;
+    }
+  }
+  
+  if (max_i >= 0) {
+    vector<cv::Point> maxContour = contours[max_i];
+    
+    drawContours( image_small, contours, max_i, Scalar( 255, 255, 255 ), 2, 8 );
+    
+    
+    // Find point that's closest to middle
+    cv::Rect bbox = boundingRect(maxContour);
+    cv::Point mid = cv::Point(bbox.x + bbox.width / 2, bbox.y + bbox.height / 2);
+    
+    int min_dist = 10000;
+    int min_j = -1;
+    
+    for ( int j = 0; j < maxContour.size(); j++) {
+      int dist = norm(mid - maxContour[j]);
+      if (min_dist > dist) {
+        min_dist = dist;
+        min_j = j;
+      }
+    }
+    
+    if (min_j >= 0) {
+      cv::Point midPoint = maxContour[min_j];
+      
+      
+      // Calculate the direction, based on neighbor points
+      int prevOffset = 2;
+      cv::Point prevPoint = maxContour[(min_j - prevOffset < 0) ?
+                                       maxContour.size() + (min_j - prevOffset) :
+                                       min_j - prevOffset ];
+      
+      int nextOffset = 2;
+      cv::Point nextPoint = maxContour[(min_j + nextOffset >= maxContour.size()) ?
+                                      (min_j + nextOffset) % maxContour.size() :
+                                       min_j + nextOffset ];
+      
+      cv::Point direction = nextPoint - prevPoint;
+      
+      direction = direction * (1 / norm(direction));
+      
+      circle(image_small, midPoint, 5, Scalar( 100, 100, 100), 2, 8);
+      line(image_small, midPoint, 50 * direction + midPoint, Scalar( 100, 100, 100), 2, 8);
+      
+    }
+    
+    
+  }
+  
+  // Upsample for display
+  pyrUp(image_small, image);
   
 }
 #endif

@@ -12,6 +12,8 @@
 #import "CvVideoCameraMod.h"
 
 #import <opencv2/highgui/cap_ios.h>
+#import <numeric>
+
 using namespace cv;
 
 @interface ViewController : UIViewController<CvVideoCameraDelegate> {

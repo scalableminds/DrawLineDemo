@@ -9,6 +9,11 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>Pods-TestFlightSDK.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>Pods.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -17,12 +22,17 @@
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
-		<key>9D1E570BFC34442F918AA180</key>
+		<key>62D5C10765EC4599AA104C10</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>A9FF6E28E9804FD882AD0F77</key>
+		<key>8A1C8AC6E777478FB2D4DF5E</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>E20663427B694066BB040ED8</key>
 		<dict>
 			<key>primary</key>
 			<true/>

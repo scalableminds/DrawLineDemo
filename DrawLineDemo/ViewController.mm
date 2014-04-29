@@ -65,12 +65,21 @@
   // Convert to grayscale
   cvtColor(image_small, image_small, CV_BGR2GRAY);
   
+  // Erode (make thin lines thicker)
+  int erosion_size = 1; // OPTION
+  Mat element = getStructuringElement( MORPH_ELLIPSE,
+                                      cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+                                      cv::Point( erosion_size, erosion_size ) );
+  erode( image_small, image_small, element );
+
   
   // Thresholding
-  int kernelSize = 33;
-  int c = 6;
+  int kernelSize = 33; // OPTION
+  int c = 6; // OPTION
   
   adaptiveThreshold(image_small, image_small, 255, ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV, kernelSize, c);
+  
+  
   
   // Find contours
   vector<vector<cv::Point>> contours;

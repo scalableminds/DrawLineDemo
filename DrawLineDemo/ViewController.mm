@@ -56,7 +56,7 @@
 
 - (void)processImage:(Mat&)image
 {
-  Mat image_small;
+  Mat image_small, image_out;
   
   
   // Downsample
@@ -79,13 +79,15 @@
   
   adaptiveThreshold(image_small, image_small, 255, ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV, kernelSize, c);
   
-  
+  // Create output buffer
+  image_out = Mat(image_small.size(), CV_8UC4);
+  bitwise_not(image_out, image_out);
   
   // Find contours
   vector<vector<cv::Point>> contours;
-  
   findContours( image_small, contours, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE );
   
+//  // Simplify path
 //  for( int k = 0; k < contours.size(); k++ )
 //    approxPolyDP(contours[k], contours[k], 2, false);
   
@@ -106,10 +108,10 @@
   if (max_i >= 0) {
     vector<cv::Point> maxContour = contours[max_i];
     
-    drawContours( image_small, contours, max_i, Scalar( 255, 255, 255 ), 2, 8 );
+    drawContours( image_out, contours, max_i, Scalar( 0, 0, 0, 255 ), 2, CV_AA );
     
     
-    // Find point that's closest to middle
+    // Find point that's closest to bbox' middle
     cv::Rect bbox = boundingRect(maxContour);
     cv::Point mid = cv::Point(bbox.x + bbox.width / 2, bbox.y + bbox.height / 2);
     
@@ -149,21 +151,25 @@
       double coeff[4][2] = { { 40, 20 }, { 40, -20 }, { -40, -20 }, { -40, 20 } };
       
       for ( int k = 0; k < 4; k++ ) {
-        line(image_small,
+        line(image_out,
              midPoint + coeff[k][0] * direction + coeff[k][1] * directionOrthogonal,
              midPoint + coeff[(k + 1) % 4][0] * direction + coeff[(k + 1) % 4][1] * directionOrthogonal,
-             Scalar(80, 80, 80), 2, 8);
+             Scalar(2, 61, 124, 255), 8, CV_AA);
       }
 
-      // Draw mid-point
-      circle(image_small, midPoint, 5, Scalar( 100, 100, 100), 2, 8);
+//      // Draw mid-point
+//      circle(image_out, midPoint, 5, CV_RGB( 100, 100, 100), 2, CV_AA);
       
     }
     
   }
   
   // Upsample for display
-  pyrUp(image_small, image);
+  pyrUp(image_out, image);
+
+  
+  // The iOS OpenCV wrapper requires BGRA format. Otherwise it will leak.
+  cvtColor(image, image, CV_RGBA2BGRA);
   
 }
 #endif
